@@ -11,7 +11,7 @@ from ..config.general_config import APP_PREFIX
 router = APIRouter(tags=['Authentication'])
 
 
-@router.post("/auth/login", status_code=status.HTTP_200_OK)
+@router.post("/api/auth/login", status_code=status.HTTP_200_OK)
 def signin(user: UserLogin, request: Request, response: Response, db: Session = Depends(get_db),):
     db_user = db.query(User).filter(User.email == user.email).first()
     # Find user
@@ -35,7 +35,7 @@ def signin(user: UserLogin, request: Request, response: Response, db: Session = 
     return {"message": "Logged in successfully"}
 
 
-@router.post("/auth/refresh")
+@router.post("/api/auth/refresh")
 def refresh_token(request: Request, response: Response):
     cookie_key = APP_PREFIX + "access_token"
     old_token = request.cookies.get(cookie_key)
@@ -53,7 +53,7 @@ def refresh_token(request: Request, response: Response):
     return {"message": "Access token refreshed successfully"}
 
 
-@router.post("/auth/me")
+@router.post("/api/auth/me", status_code=status.HTTP_200_OK)
 def me(db: Session = Depends(get_db), token=Depends(has_token)):
     user_id = token["user_id"]
     db_user = db.query(User).filter(User.id == user_id).first()
@@ -61,3 +61,10 @@ def me(db: Session = Depends(get_db), token=Depends(has_token)):
     return {
         "user": user
     }
+
+
+@router.post("/api/auth/logout", status_code=status.HTTP_200_OK)
+def logout(response: Response):
+    cookie_key = APP_PREFIX + "access_token"
+    response.delete_cookie(key=cookie_key)
+    return {"message": "Logged out successfully"}

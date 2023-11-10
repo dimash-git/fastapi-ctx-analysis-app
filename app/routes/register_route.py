@@ -8,7 +8,7 @@ from ..utils.hashing import Hasher
 router = APIRouter(tags=['Registration'])
 
 
-@router.post("/auth/register", status_code=status.HTTP_201_CREATED)
+@router.post("/api/auth/register", status_code=status.HTTP_201_CREATED)
 def signup(user: UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:

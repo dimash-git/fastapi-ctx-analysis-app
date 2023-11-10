@@ -17,6 +17,8 @@ def has_token(request: Request):
     cookie_key = APP_PREFIX + "access_token"
     token = request.cookies.get(cookie_key)
 
+    print(token)
+
     if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
 
