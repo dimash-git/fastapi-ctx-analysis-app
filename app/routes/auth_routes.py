@@ -10,6 +10,8 @@ from ..config.general_config import APP_PREFIX
 
 router = APIRouter(tags=['Authentication'])
 
+cookie_key = APP_PREFIX + "access_token"
+
 
 @router.post("/api/auth/login", status_code=status.HTTP_200_OK)
 def signin(user: UserLogin, request: Request, response: Response, db: Session = Depends(get_db),):
@@ -23,7 +25,6 @@ def signin(user: UserLogin, request: Request, response: Response, db: Session = 
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     token = sign_jwt(str(db_user.id))
-    cookie_key = APP_PREFIX + "access_token"
 
     old_token = request.cookies.get(cookie_key)
     if old_token and not is_token_blacklisted(old_token):
@@ -32,12 +33,11 @@ def signin(user: UserLogin, request: Request, response: Response, db: Session = 
     # Set the JWT token in an HTTP-only cookie
     response.set_cookie(key=cookie_key, value=token["access_token"], httponly=True)
 
-    return {"message": "Logged in successfully"}
+    return {"detail": "Logged in successfully."}
 
 
 @router.post("/api/auth/refresh")
 def refresh_token(request: Request, response: Response):
-    cookie_key = APP_PREFIX + "access_token"
     old_token = request.cookies.get(cookie_key)
 
     if old_token is None:
@@ -50,7 +50,13 @@ def refresh_token(request: Request, response: Response):
 
     response.set_cookie(key=cookie_key, value=token["access_token"], httponly=True)
 
-    return {"message": "Access token refreshed successfully"}
+    return {"detail": "Access token refreshed successfully."}
+
+
+@router.post("/api/auth/logout", status_code=status.HTTP_200_OK)
+def logout(response: Response):
+    response.delete_cookie(key=cookie_key)
+    return {"detail": "Logged out successfully."}
 
 
 @router.post("/api/auth/me", status_code=status.HTTP_200_OK)
@@ -59,12 +65,6 @@ def me(db: Session = Depends(get_db), token=Depends(has_token)):
     db_user = db.query(User).filter(User.id == user_id).first()
     user = UserResponse.model_validate(db_user)
     return {
+        "detail": "User is authenticated.",
         "user": user
     }
-
-
-@router.post("/api/auth/logout", status_code=status.HTTP_200_OK)
-def logout(response: Response):
-    cookie_key = APP_PREFIX + "access_token"
-    response.delete_cookie(key=cookie_key)
-    return {"message": "Logged out successfully"}
