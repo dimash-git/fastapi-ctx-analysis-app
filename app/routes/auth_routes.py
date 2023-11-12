@@ -60,8 +60,7 @@ def logout(response: Response):
 
 
 @router.post("/api/auth/me", status_code=status.HTTP_200_OK)
-def me(db: Session = Depends(get_db), token=Depends(has_token)):
-    user_id = token["user_id"]
+def me(db: Session = Depends(get_db), user_id=Depends(has_token)):
     db_user = db.query(User).filter(User.id == user_id).first()
     user = UserResponse.model_validate(db_user)
     return {
